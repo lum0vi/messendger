@@ -1,0 +1,161 @@
+basePath: /
+definitions:
+  errors.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  models.CreatePrivateChatRequest:
+    properties:
+      friend_id:
+        type: string
+    type: object
+  models.CreatePrivateChatResponse:
+    properties:
+      chat_id:
+        type: string
+    type: object
+  models.CreatePublicChatRequest:
+    properties:
+      name:
+        type: string
+      participant_id:
+        items:
+          type: string
+        type: array
+    type: object
+  models.CreatePublicChatResponse:
+    properties:
+      chat_id:
+        type: string
+    type: object
+  models.GetChatUsersResponse:
+    properties:
+      users:
+        items:
+          type: string
+        type: array
+    type: object
+  models.GetChatsResponse:
+    properties:
+      chat_id:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost:8083
+info:
+  contact: {}
+  title: Сервис Chat
+  version: "1.0"
+paths:
+  /chat:
+    get:
+      consumes:
+      - application/json
+      description: Получение чатов пользователя
+      operationId: get-chats
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data
+          schema:
+            $ref: '#/definitions/models.GetChatsResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получить чаты пользователя
+      tags:
+      - API получить чаты
+  /chat/{chat_id}/users:
+    get:
+      parameters:
+      - description: ID чата
+        in: path
+        name: chat_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.GetChatUsersResponse'
+            type: array
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Получить участников чата
+      tags:
+      - chats
+  /chat/private:
+    post:
+      consumes:
+      - application/json
+      description: Создание приватного чата
+      operationId: create-private-chat
+      parameters:
+      - description: credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreatePrivateChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data
+          schema:
+            $ref: '#/definitions/models.CreatePrivateChatResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создание Приватного чата
+      tags:
+      - API создание чата
+  /chat/public:
+    post:
+      consumes:
+      - application/json
+      description: Создание публичного чата
+      operationId: create-public-chat
+      parameters:
+      - description: credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreatePublicChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data
+          schema:
+            $ref: '#/definitions/models.CreatePublicChatResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создание Группы
+      tags:
+      - API создание чата
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: id
+    type: apiKey
+swagger: "2.0"

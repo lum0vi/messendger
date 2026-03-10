@@ -1,0 +1,201 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - app
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    networks:
+      - app
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "user", "-d", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    networks:
+      - app
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    networks:
+      - app
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    depends_on:
+      - zookeeper
+
+  auth-service:
+    build:
+      context: ../auth
+      dockerfile: Dockerfile
+    container_name: auth-service
+    networks:
+      - app
+    environment:
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8081
+      PUBLIC_KEY_PATH: /app/keys/public.pem
+      PRIVATE_KEY_PATH: /app/keys/private.pem
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB_NAME: postgres
+      APP_ENV: production
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  user-service:
+    build:
+      context: ../user
+      dockerfile: Dockerfile
+    container_name: user-service
+    networks:
+      - app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8082
+      APP_ENV: production
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB_NAME: postgres
+
+  chat-service:
+    build:
+      context: ../chat
+      dockerfile: Dockerfile
+    container_name: chat-service
+    networks:
+      - app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8083
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB_NAME: postgres
+      APP_ENV: production
+
+  message-service:
+    build:
+      context: ../message
+      dockerfile: Dockerfile
+    container_name: message-service
+    networks:
+      - app
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8084
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: postgres
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - app
+    environment:
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+      PUBLIC_KEY_PATH: /app/keys/public.pem
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: 8081
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      USER_SERVICE_HOST: user-service
+      USER_SERVICE_PORT: 8082
+      CHAT_SERVICE_HOST: chat-service
+      CHAT_SERVICE_PORT: 8083
+      MESSAGE_SERVICE_HOST: message-service
+      MESSAGE_SERVICE_PORT: 8084
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:80"
+    networks:
+      - app
+    depends_on:
+      - gateway
+
+volumes:
+  redis-data:
+    driver: local
+  pgdata:
+    driver: local
+
+networks:
+  app:
+    driver: bridge

@@ -1,0 +1,688 @@
+{
+  "info": {
+    "name": "Messenger API - Full Testing",
+    "description": "Коллекция для полного тестирования Messenger API. Порядок выполнения: 1) Register User A -> 2) Login User A -> 3) Register User B -> 4) Login User B -> 5) Get All Users -> 6) Create Private Chat -> 7) Get My Chats -> 8) Get Chat Users",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "chatId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "messageId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "friendId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "testuser",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "testpass123",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "1. Register User A",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\",\n    \"email\": \"{{username}}@test.com\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User A registered successfully', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has user ID', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.collectionVariables.set('userId', response.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Login User A",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User A logged in successfully', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has token', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('token');",
+                  "    pm.collectionVariables.set('token', response.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Register User B (Friend)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"frienduser\",\n    \"password\": \"friendpass123\",\n    \"email\": \"friend@test.com\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User B registered successfully', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has user ID', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.collectionVariables.set('userId2', response.id);",
+                  "    pm.collectionVariables.set('friendId', response.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Login User B",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"frienduser\",\n    \"password\": \"friendpass123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User B logged in successfully', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has token', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('token');",
+                  "    pm.collectionVariables.set('token2', response.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "5. Get All Users (as User A)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/user/users",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get users returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has Users array', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('Users');",
+                  "    pm.expect(response.Users).to.be.an('array');",
+                  "});",
+                  "pm.test('Find friend user ID', function() {",
+                  "    const response = pm.response.json();",
+                  "    const currentUserId = pm.collectionVariables.get('userId');",
+                  "    const otherUser = response.Users.find(u => u.id !== currentUserId);",
+                  "    if (otherUser) {",
+                  "        pm.collectionVariables.set('friendId', otherUser.id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Get Me (User A)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/user/me",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get me returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has user data', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('username');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Update Me",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/user/me",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"updateduser\",\n    \"email\": \"updated@test.com\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Update me returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Get User By ID",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/user/id",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": \"{{friendId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get user by ID returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has user data', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Get User By Username",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/user/name",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"{{username}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get user by username returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "10. Create Private Chat",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/chat/private",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"friend_id\": \"{{friendId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create private chat returns 201', function() {",
+                  "    pm.expect(pm.response.status).to.eq(201);",
+                  "});",
+                  "pm.test('Response has chat_id', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('chat_id');",
+                  "    pm.collectionVariables.set('chatId', response.chat_id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11. Get My Chats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/chat/",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get my chats returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has chat_id array', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('chat_id');",
+                  "});",
+                  "pm.test('Save chat ID', function() {",
+                  "    const response = pm.response.json();",
+                  "    if (response.chat_id && response.chat_id.length > 0) {",
+                  "        pm.collectionVariables.set('chatId', response.chat_id[0]);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12. Get Chat Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/chat/{{chatId}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "{{chatId}}",
+                "users"
+              ]
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get chat users returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});",
+                  "pm.test('Response has users array', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('users');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13. Create Public Chat",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/chat/public",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"My Public Chat\",\n    \"participant_id\": [\"{{friendId}}\"]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create public chat returns 201', function() {",
+                  "    pm.expect(pm.response.status).to.eq(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Message",
+      "item": [
+        {
+          "name": "14. Update Message Status",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/message/upd",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Update message status returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15. Get Unsent Messages",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/message/some-message-id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "message",
+                "some-message-id"
+              ]
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get unsent messages returns 200', function() {",
+                  "    pm.expect(pm.response.status).to.eq(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "16. Swagger Documentation",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/swagger/index.html"
+          }
+        },
+        {
+          "name": "17. Health Check (Get Me without auth)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/user/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Without token returns 401', function() {",
+                  "    pm.expect(pm.response.status).to.eq(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "WebSocket",
+      "item": [
+        {
+          "name": "WebSocket Connection",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/ws",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swagger",
+      "item": [
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/swagger/index.html"
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Автоматически устанавливаем токен в заголовок, если он есть",
+          "if (pm.collectionVariables.get('token')) {",
+          "    pm.request.headers.add({",
+          "        key: 'Authorization',",
+          "        value: 'Bearer ' + pm.collectionVariables.get('token')",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}

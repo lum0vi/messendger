@@ -1,0 +1,505 @@
+basePath: /
+definitions:
+  errors.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  models.CreatePrivateChatRequest:
+    properties:
+      friend_id:
+        type: string
+    type: object
+  models.CreatePrivateChatResponse:
+    properties:
+      chat_id:
+        type: string
+    type: object
+  models.CreatePublicChatRequest:
+    properties:
+      name:
+        type: string
+      participant_id:
+        items:
+          type: string
+        type: array
+    type: object
+  models.GetChatUsersResponse:
+    properties:
+      users:
+        items:
+          type: string
+        type: array
+    type: object
+  models.GetMeChatsResponse:
+    properties:
+      chat_id:
+        items:
+          type: string
+        type: array
+    type: object
+  models.GetUserByIdRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  models.GetUserByIdResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  models.GetUserByUsernameRequest:
+    properties:
+      username:
+        type: string
+    type: object
+  models.GetUserByUsernameResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  models.GetUsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/models.UserForGetUsers'
+        type: array
+    type: object
+  models.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  models.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  models.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  models.RegisterResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  models.UpdateMeRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  models.UserForGetUsers:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API Gateway for the Messenger service
+  title: Messenger API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет авторизацию пользователя и генерирует JWT токен. Принимает
+        данные для входа и возвращает токен при успешной авторизации.
+      parameters:
+      - description: Данные для авторизации пользователей
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная авторизация, возвращает JWT токен
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "400":
+          description: Неверные данные для авторизации
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Не авторизован, неверные учетные данные
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Авторизация пользователя
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя. Принимает данные для регистрации
+        и возвращает ответ с информацией о созданном пользователе.
+      parameters:
+      - description: Данные для регистрации нового пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная регистрация
+          schema:
+            $ref: '#/definitions/models.RegisterResponse'
+        "400":
+          description: Неверные данные для регистрации
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
+  /chat:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all user chats
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetMeChatsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get My Chats
+      tags:
+      - chats
+  /chat/{chat_id}/users:
+    get:
+      consumes:
+      - application/json
+      description: получить пользователей чата
+      parameters:
+      - description: ID чата
+        in: path
+        name: chat_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetChatUsersResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: GetChatUsers
+      tags:
+      - chats
+  /chat/private:
+    post:
+      consumes:
+      - application/json
+      description: Create a private chat between users
+      parameters:
+      - description: Private Chat Data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreatePrivateChatRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.CreatePrivateChatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Private Chat
+      tags:
+      - chats
+  /chat/public:
+    post:
+      consumes:
+      - application/json
+      description: Create a public group chat
+      parameters:
+      - description: Public Chat Data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreatePublicChatRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.CreatePrivateChatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Public Chat
+      tags:
+      - chats
+  /user/id:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve user data by user ID.
+      parameters:
+      - description: id пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.GetUserByIdRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetUserByIdResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get User By ID
+      tags:
+      - users
+  /user/me:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the currently authenticated user's data.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get User Information
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update the currently authenticated user's data.
+      parameters:
+      - description: User Update Data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateMeRequest'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update User Information
+      tags:
+      - users
+  /user/name:
+    get:
+      consumes:
+      - application/json
+      description: получить пользователя по username
+      parameters:
+      - description: username пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.GetUserByUsernameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetUserByUsernameResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: GetUserByUsername
+      tags:
+      - users
+  /user/users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetUsersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All Users
+      tags:
+      - users
+  /ws:
+    get:
+      consumes:
+      - application/json
+      description: Establish a websocket connection for real-time messaging.
+      parameters:
+      - description: User ID for the connection
+        in: query
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Connection Established
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: WebSocket
+      tags:
+      - websocket
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
