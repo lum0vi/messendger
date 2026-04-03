@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS subscriptions;
+DROP TABLE IF EXISTS files_on_projects;
+DROP TABLE IF EXISTS files;
+DROP TABLE IF EXISTS project_comments;
+DROP TABLE IF EXISTS project_likes;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS posts_comments;
+DROP TABLE IF EXISTS posts_likes;
+DROP TABLE IF EXISTS posts;

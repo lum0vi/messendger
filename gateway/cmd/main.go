@@ -49,7 +49,7 @@ func main() {
 	repo := repository.NewRepository(cfg)
 	svc := service.NewService(repo)
 	handler := hand.NewHandler(svc, redisConn, cfg, producer)
-
+	time.Sleep(10 * time.Second) // ждем пока запустится kafka и redis
 	consumer := cnsm.NewConsumerMessage(addrKafka, handler)
 	go func() {
 		consumer.Start(context.Background())

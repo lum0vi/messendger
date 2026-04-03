@@ -45,37 +45,37 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	r.Use(middleware.RequestMiddleware())
 	r.GET("/ws", middleware.AuthMiddleware(), h.Websocket)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	auth := r.Group("/auth")
-	{
-		auth.POST("/register", h.Register)
-		auth.POST("/login", h.Login)
-	}
-	user := r.Group("/user")
-	{
-		user.Use(middleware.AuthMiddleware())
-		user.GET("/me", h.GetMe)
-		user.PUT("/me", h.UpdateMe)
-		user.GET("/users", h.GetUsers)
-		user.POST("/id", h.GetUserByID)
-		user.POST("/name", h.GetUserByUsername)
-	}
+	// auth := r.Group("/auth")
+	// {
+	// 	auth.POST("/register", h.Register)
+	// 	auth.POST("/login", h.Login)
+	// }
+	// user := r.Group("/user")
+	// {
+	// 	user.Use(middleware.AuthMiddleware())
+	// 	user.GET("/me", h.GetMe)
+	// 	user.PUT("/me", h.UpdateMe)
+	// 	user.GET("/users", h.GetUsers)
+	// 	user.POST("/id", h.GetUserByID)
+	// 	user.POST("/name", h.GetUserByUsername)
+	// }
 
-	chat := r.Group("/chat")
-	{
-		chat.Use(middleware.AuthMiddleware())
-		chat.GET("/", h.GetMeChats)
-		chat.POST("/private", h.CreatePrivateChat)
-		chat.POST("/public", h.CreatePublicChat)
-		chat.GET("/:chat_id/users", h.GetChatUsers)
-	}
+	// chat := r.Group("/chat")
+	// {
+	// 	chat.Use(middleware.AuthMiddleware())
+	// 	chat.GET("/", h.GetMeChats)
+	// 	chat.POST("/private", h.CreatePrivateChat)
+	// 	chat.POST("/public", h.CreatePublicChat)
+	// 	chat.GET("/:chat_id/users", h.GetChatUsers)
+	// }
 
-	message := r.Group("/message")
-	{
-		message.Use(middleware.AuthMiddleware())
-		message.PUT("/upd", h.UpdateMessageStatus)
-		message.GET("/:id", h.GetUnsentMessages)
-		message.GET("/chat/:chat_id", h.GetChatMessages)
-	}
+	// message := r.Group("/message")
+	// {
+	// 	message.Use(middleware.AuthMiddleware())
+	// 	message.PUT("/upd", h.UpdateMessageStatus)
+	// 	message.GET("/:id", h.GetUnsentMessages)
+	// 	message.GET("/chat/:chat_id", h.GetChatMessages)
+	// }
 
 	return r
 }

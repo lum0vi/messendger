@@ -32,6 +32,21 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    networks:
+      - app
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper
@@ -48,9 +63,12 @@ services:
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      ALLOW_PLAINTEXT_LISTENER: "yes"
+      # Обязательно для одного брокера:
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     depends_on:
       - zookeeper
 
@@ -96,6 +114,8 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8082
       APP_ENV: production
+      PUBLIC_KEY_PATH: /app/keys/public.pem
+      PRIVATE_KEY_PATH: /app/keys/private.pem
       POSTGRES_USER: user
       POSTGRES_PASSWORD: secret
       POSTGRES_HOST: postgres
@@ -116,6 +136,8 @@ services:
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: 8083
       POSTGRES_USER: user
+      PUBLIC_KEY_PATH: /app/keys/public.pem
+      PRIVATE_KEY_PATH: /app/keys/private.pem
       POSTGRES_PASSWORD: secret
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -132,6 +154,8 @@ services:
     environment:
       HOST: 0.0.0.0
       PORT: 8084
+      PUBLIC_KEY_PATH: /app/keys/public.pem
+      PRIVATE_KEY_PATH: /app/keys/private.pem
       POSTGRES_USER: user
       POSTGRES_PASSWORD: secret
       POSTGRES_HOST: postgres
@@ -144,6 +168,36 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  # activity-service:
+  #   build:
+  #     context: ../activity
+  #     dockerfile: Dockerfile
+  #   container_name: activity-service
+  #   networks:
+  #     - app
+  #   environment:
+  #     SERVER_HOST: 0.0.0.0
+  #     SERVER_PORT: 8085
+  #     PUBLIC_KEY_PATH: /app/keys/public.pem
+  #     PRIVATE_KEY_PATH: /app/keys/private.pem
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: secret
+  #     POSTGRES_HOST: postgres
+  #     POSTGRES_PORT: 5432
+  #     POSTGRES_DB_NAME: postgres
+  #     APP_ENV: production
+  #     MINIO_ENDPOINT: minio:9000
+  #     MINIO_ACCESS_KEY: minioadmin
+  #     MINIO_SECRET_KEY: minioadmin
+  #     MINIO_BUCKET: activity-files
+  #     MINIO_USE_SSL: "false"
+  #     MINIO_REGION: us-east-1
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_started
 
   gateway:
     build:
@@ -189,11 +243,13 @@ services:
       - app
     depends_on:
       - gateway
-
+  
 volumes:
   redis-data:
     driver: local
   pgdata:
+    driver: local
+  minio-data:
     driver: local
 
 networks:
